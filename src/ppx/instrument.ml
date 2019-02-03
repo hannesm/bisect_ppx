@@ -839,6 +839,18 @@ class instrumenter =
         Exp.for_
           ~loc ~attrs variable initial bound direction (instrument_expr body)
 
+      (* Recursively instrument extension nodes that appear in expression
+         position, ensuring their payload is also an expression. For all other
+         extensions, this instrumenter class overrides method [extension] to
+         make sure we don't try to instrument them. *)
+      | Pexp_extension (loc', PStr [{
+          pstr_loc;
+          pstr_desc = Pstr_eval (e, attrs')}]) ->
+        let e = self#expr e in
+        let attrs' = self#attributes attrs' in
+        Exp.extension ~loc ~attrs (loc', Parsetree.PStr [
+          Str.eval ~loc:pstr_loc ~attrs:attrs' e])
+
       | _ ->
         e'
 
